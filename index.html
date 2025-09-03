@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+  <script src="jspsych-6.0-pre/jspsych.js"></script>
+  <script src="jspsych-6.0-pre/plugins/jspsych-single-stim.js"></script>
+  <script src="jspsych-6.0-pre/plugins/jspsych-categorize.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.4.1/snap.svg.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/jstat/latest/jstat.min.js"></script>
+
+  <link rel="stylesheet" href="jspsych-6.0-pre/css/jspsych.css"></link>
+</head>
+<body></body>
+<script>
+
+  // heavily inspired by Markant & Gureckis (e.g., http://smash.psych.nyu.edu/courses/spring12/lhc/lectures/lecture10.pdf)
+
+  function resolveToPoint(deg, r) {
+      var rad = Math.PI * deg / 180;
+      return {mX: r * Math.cos(rad), mY: r * Math.sin(rad)};
+  }
+
+  function create_stimulus(x,y){
+
+    var s = Snap(400,400);
+    s.circle(200, 200, 100 + x*50).attr({
+      fill: '#fff',
+      stroke: '#000',
+      strokeWidth: 5
+    });
+    var pt = resolveToPoint(y*180, 100+x*50);
+    s.line(200+pt.mX, 200+pt.mY, 200-pt.mX, 200-pt.mY).attr({
+      stroke: '#000',
+      strokeWidth: 5
+    });
+
+    var html = '<svg width="400" height="400" version="1.1" xmlns="http://www.w3.org/2000/svg">';
+    html += s.innerSVG();
+    html+= '</svg>'
+
+    s.remove();
+
+    return html;
+
+  }
+
+  var timeline = [];
+
+  // instructions
+  timeline.push({
+    type: 'single-stim',
+    stimulus: '<div style="width:800px; text-align: left;"><img src="img/loop.PNG" style="float: left; padding-right: 40px;"></img>'+
+      '<p>In this neighborhood, there are only two TV channels: channel 1 and channel 2.'+
+      ' Antennas, like the one in the picture, can pick up only one of the channels at a time. Different antenna designs will '+
+      'pick up different channels.</p><p>In this experiment, you will learn which kind of antenna picks up which channel.</p>'+
+      '<p>Press C to continue.</p></div>',
+    choices: ['c'],
+    is_html: true
+  });
+
+  timeline.push({
+    type: 'single-stim',
+    stimulus: '<div style="width:800px; text-align: left;">'+
+      '<p>You will get to see one antenna at a time and guess whether it picks up channel 1 or channel 2.</p>'+
+      '<p>To guess channel 1, press 1.</p>'+
+      '<p>To guess channel 2, press 2.</p>'+
+      '<p>You will be told whether your guess was right or wrong each time. Try to learn what makes an antenna a channel 1 or channel 2 antenna.</p>'+
+      '<p>Press C to begin.</p>'+
+      '</div>',
+    choices: ['c'],
+    is_html: true
+  });
+
+  // trial generation
+  function create_trial(category){
+    var x = -1;
+    var y = -1;
+    var mx, my;
+    if(category==1){
+      mx = 0.25;
+      my = 0.5;
+    } else {
+      mx = 0.75;
+      my = 0.5;
+    }
+    while(x < 0 || x > 1 || y < 0 || y > 1){
+      x = jStat.normal.sample(mx, 0.1);
+      y = jStat.normal.sample(my, 0.1);
+    }
+    return {x, y, key: (category==1)? 49 : 50, label: 'channel '+category}
+  }
+
+  // categorization
+  var categorization_trials = [];
+  for(var i=0; i<15; i++){
+    categorization_trials.push(create_trial(1), create_trial(2));
+  }
+
+  timeline.push({
+    timeline_variables: categorization_trials,
+    randomize_order: true,
+    timeline: [
+      {
+        type: 'categorize',
+        stimulus: function(){
+          return create_stimulus(jsPsych.timelineVariable('x'), jsPsych.timelineVariable('y'));
+        },
+        is_html: true,
+        key_answer: function() { return jsPsych.timelineVariable('key'); },
+        correct_text: '<p>Correct! This antenna picks up %ANS%.</p>',
+        incorrect_text: '<p>Incorrect. This antenna picks up %ANS%.</p>',
+        text_answer: function() { return jsPsych.timelineVariable('label'); },
+        prompt: '<p>Does this antenna pick up channel 1 or 2?</p>',
+        timing_feedback_duration: 1000,
+        timing_post_trial: 200,
+        choices: ['1','2']
+      }
+    ]
+  });
+
+  // generalization instructions
+  timeline.push({
+    type: 'single-stim',
+    stimulus: '<div style="width:800px; text-align: left;">'+
+      '<p>Now you are going to be tested on how well you learned the categories. The procedure is the same, but you will no longer get any feedback.</p>'+
+      '<p>To guess channel 1, press 1.</p>'+
+      '<p>To guess channel 2, press 2.</p>'+
+      '<p>Press C to begin.</p>'+
+      '</div>',
+    choices: ['c'],
+    is_html: true
+  });
+
+  // generalization
+  var generalization_trials = [];
+  for(var i=0; i<10; i++){
+    generalization_trials.push(create_trial(1), create_trial(2));
+  }
+
+  timeline.push({
+    timeline_variables: generalization_trials,
+    randomize_order: true,
+    timeline: [
+      {
+        type: 'single-stim',
+        stimulus: function(){
+          return create_stimulus(jsPsych.timelineVariable('x'), jsPsych.timelineVariable('y'));
+        },
+        is_html: true,
+        choices: ['1','2'],
+        data: function(){
+          return {
+            test: true,
+            correct_response: jsPsych.timelineVariable('key')
+          }
+        },
+        prompt: '<p>Does this antenna pick up channel 1 or 2?</p>',
+        timing_post_trial: 200,
+        on_finish: function(data){
+          jsPsych.data.addDataToLastTrial({correct: data.key_press == data.correct_response});
+        }
+      }
+    ]
+  });
+
+  timeline.push({
+    type: 'single-stim',
+    stimulus: function(){
+      var pCorrect = 100 * jsPsych.data.getData([{test: true, correct: true}]).length / 20;
+      return '<div style="width:800px; text-align: left;">'+
+      '<p>All done! You correctly categorized '+pCorrect+'% of the antennas.</p>'+
+      '</div>'
+    },
+    choices: ['c'],
+    is_html: true
+  });
+
+  jsPsych.init({
+    timeline: timeline
+  })
+</script>
+</html>
