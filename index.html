@@ -1,17 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
-  <script src="jspsych-6.0-pre/jspsych.js"></script>
-  <script src="jspsych-6.0-pre/plugins/jspsych-single-stim.js"></script>
-  <script src="jspsych-6.0-pre/plugins/jspsych-categorize.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Antenna Categorization Experiment</title>
+  <script src="https://unpkg.com/jspsych@8.0.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@2.0.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@2.0.0"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.4.1/snap.svg.js"></script>
   <script type="text/javascript" src="https://cdn.jsdelivr.net/jstat/latest/jstat.min.js"></script>
 
-  <link rel="stylesheet" href="jspsych-6.0-pre/css/jspsych.css"></link>
+  <link href="https://unpkg.com/jspsych@8.0.2/css/jspsych.css" rel="stylesheet" type="text/css" />
+  <style>
+    /* Mobile-friendly styles */
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-size: 18px;
+      line-height: 1.4;
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
+    }
+    
+    body {
+      padding: 20px 10px;
+    }
+    
+    /* Stimulus container adjustments */
+    #jspsych-html-button-response-stimulus {
+      max-width: 100%;
+      margin-bottom: 30px;
+    }
+    
+    /* Make content responsive */
+    div[style*="width:800px"] {
+      width: 100% !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      padding: 0 10px !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+    }
+    
+    /* Ensure all content fits within viewport */
+    .jspsych-display-element {
+      width: 100% !important;
+      max-width: 100vw !important;
+      box-sizing: border-box !important;
+      padding: 0 10px !important;
+    }
+    
+    /* Fix text containers */
+    p {
+      max-width: 100% !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      hyphens: auto !important;
+    }
+    
+    /* Custom button styling for mobile */
+    .jspsych-btn {
+      display: block !important;
+      width: 100% !important;
+      max-width: 300px !important;
+      height: 60px !important;
+      margin: 15px auto !important;
+      font-size: 20px !important;
+      font-weight: bold !important;
+      border-radius: 10px !important;
+      border: 2px solid #007bff !important;
+      background-color: #007bff !important;
+      color: white !important;
+      cursor: pointer !important;
+      transition: background-color 0.2s !important;
+    }
+    
+    .jspsych-btn:hover, .jspsych-btn:active {
+      background-color: #0056b3 !important;
+      border-color: #0056b3 !important;
+    }
+    
+    /* Button container */
+    #jspsych-html-button-response-btngroup {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 10px !important;
+    }
+    
+    /* SVG stimulus sizing */
+    svg {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    
+    /* Prompt styling */
+    .jspsych-html-button-response-prompt {
+      font-size: 20px !important;
+      font-weight: bold !important;
+      margin-bottom: 20px !important;
+      text-align: center !important;
+    }
+  </style>
 </head>
 <body></body>
 <script>
+  // Initialize jsPsych
+  var jsPsych = initJsPsych();
 
   // heavily inspired by Markant & Gureckis (e.g., http://smash.psych.nyu.edu/courses/spring12/lhc/lectures/lecture10.pdf)
 
@@ -48,27 +144,24 @@
 
   // instructions
   timeline.push({
-    type: 'single-stim',
-    stimulus: '<div style="width:800px; text-align: left;"><img src="img/loop.PNG" style="float: left; padding-right: 40px;"></img>'+
+    type: jsPsychHtmlButtonResponse,
+    stimulus: '<div style="width:800px; text-align: center;">'+
+      '<img src="img/loop.PNG" style="max-width: 100%; height: auto; margin-bottom: 20px; display: block;"></img>'+
+      '<div style="text-align: left;">'+
       '<p>In this neighborhood, there are only two TV channels: channel 1 and channel 2.'+
       ' Antennas, like the one in the picture, can pick up only one of the channels at a time. Different antenna designs will '+
       'pick up different channels.</p><p>In this experiment, you will learn which kind of antenna picks up which channel.</p>'+
-      '<p>Press C to continue.</p></div>',
-    choices: ['c'],
-    is_html: true
+      '</div></div>',
+    choices: ['Continue']
   });
 
   timeline.push({
-    type: 'single-stim',
+    type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="width:800px; text-align: left;">'+
       '<p>You will get to see one antenna at a time and guess whether it picks up channel 1 or channel 2.</p>'+
-      '<p>To guess channel 1, press 1.</p>'+
-      '<p>To guess channel 2, press 2.</p>'+
       '<p>You will be told whether your guess was right or wrong each time. Try to learn what makes an antenna a channel 1 or channel 2 antenna.</p>'+
-      '<p>Press C to begin.</p>'+
       '</div>',
-    choices: ['c'],
-    is_html: true
+    choices: ['Begin']
   });
 
   // trial generation
@@ -87,7 +180,7 @@
       x = jStat.normal.sample(mx, 0.1);
       y = jStat.normal.sample(my, 0.1);
     }
-    return {x, y, key: (category==1)? 49 : 50, label: 'channel '+category}
+    return {x, y, button: (category==1)? 0 : 1, label: 'channel '+category}
   }
 
   // categorization
@@ -101,34 +194,48 @@
     randomize_order: true,
     timeline: [
       {
-        type: 'categorize',
+        type: jsPsychHtmlButtonResponse,
         stimulus: function(){
-          return create_stimulus(jsPsych.timelineVariable('x'), jsPsych.timelineVariable('y'));
+          const x = jsPsych.evaluateTimelineVariable('x');
+          const y = jsPsych.evaluateTimelineVariable('y');
+          return create_stimulus(x, y);
         },
-        is_html: true,
-        key_answer: function() { return jsPsych.timelineVariable('key'); },
-        correct_text: '<p>Correct! This antenna picks up %ANS%.</p>',
-        incorrect_text: '<p>Incorrect. This antenna picks up %ANS%.</p>',
-        text_answer: function() { return jsPsych.timelineVariable('label'); },
+        choices: ['Channel 1', 'Channel 2'],
+        button_layout: 'flex',
         prompt: '<p>Does this antenna pick up channel 1 or 2?</p>',
-        timing_feedback_duration: 1000,
-        timing_post_trial: 200,
-        choices: ['1','2']
+        data: {
+          correct_response: jsPsych.timelineVariable('button'),
+          correct_label: jsPsych.timelineVariable('label'),
+        },
+        on_finish: function(data){
+          data.correct = data.response == data.correct_response;
+        }
+      },
+      {
+        type: jsPsychHtmlKeyboardResponse,
+        stimulus: function(){
+          var lastTrial = jsPsych.data.getLastTrialData().values()[0];
+          var correct = lastTrial.correct;
+          var label = lastTrial.correct_label;
+          return correct ? 
+            '<p>Correct! This antenna picks up ' + label + '.</p>' :
+            '<p>Incorrect. This antenna picks up ' + label + '.</p>';
+        },
+        choices: [],
+        trial_duration: 1000,
+        response_ends_trial: false,
+        post_trial_gap: 200
       }
     ]
   });
 
   // generalization instructions
   timeline.push({
-    type: 'single-stim',
+    type: jsPsychHtmlButtonResponse,
     stimulus: '<div style="width:800px; text-align: left;">'+
       '<p>Now you are going to be tested on how well you learned the categories. The procedure is the same, but you will no longer get any feedback.</p>'+
-      '<p>To guess channel 1, press 1.</p>'+
-      '<p>To guess channel 2, press 2.</p>'+
-      '<p>Press C to begin.</p>'+
       '</div>',
-    choices: ['c'],
-    is_html: true
+    choices: ['Begin Test']
   });
 
   // generalization
@@ -142,41 +249,38 @@
     randomize_order: true,
     timeline: [
       {
-        type: 'single-stim',
+        type: jsPsychHtmlButtonResponse,
         stimulus: function(){
-          return create_stimulus(jsPsych.timelineVariable('x'), jsPsych.timelineVariable('y'));
+          const x = jsPsych.evaluateTimelineVariable('x');
+          const y = jsPsych.evaluateTimelineVariable('y');
+          return create_stimulus(x, y);
         },
-        is_html: true,
-        choices: ['1','2'],
-        data: function(){
-          return {
-            test: true,
-            correct_response: jsPsych.timelineVariable('key')
-          }
+        choices: ['Channel 1', 'Channel 2'],
+        button_layout: 'flex',
+        data: {
+          test: true,
+          correct_response: jsPsych.timelineVariable('button')
         },
         prompt: '<p>Does this antenna pick up channel 1 or 2?</p>',
-        timing_post_trial: 200,
+        post_trial_gap: 200,
         on_finish: function(data){
-          jsPsych.data.addDataToLastTrial({correct: data.key_press == data.correct_response});
+          data.correct = data.response == data.correct_response;
         }
       }
     ]
   });
 
   timeline.push({
-    type: 'single-stim',
+    type: jsPsychHtmlButtonResponse,
     stimulus: function(){
-      var pCorrect = 100 * jsPsych.data.getData([{test: true, correct: true}]).length / 20;
+      var pCorrect = 100 * jsPsych.data.get().filter({test: true, correct: true}).count() / 20;
       return '<div style="width:800px; text-align: left;">'+
       '<p>All done! You correctly categorized '+pCorrect+'% of the antennas.</p>'+
       '</div>'
     },
-    choices: ['c'],
-    is_html: true
+    choices: ['Finish']
   });
 
-  jsPsych.init({
-    timeline: timeline
-  })
+  jsPsych.run(timeline)
 </script>
 </html>
